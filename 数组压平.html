@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    let res = [] 
+    // function flattenArr (arr) {
+    //   res.concat(arr)
+    // }
+    function isArray(arr){
+      if(arr instanceof Array) {
+        return true
+      } else {
+        return false
+      }
+    }
+    function executeArr (arr) {
+      if(isArray(arr)){
+        for(i in arr){
+          executeArr(arr[i])
+        } 
+      }else {
+        res.push(arr)
+      }
+    }
+    const myarr = [1,2,[3,[4,5],6],7]
+    executeArr(myarr)
+    console.log(res)
+  </script>
+</body>
+</html>
