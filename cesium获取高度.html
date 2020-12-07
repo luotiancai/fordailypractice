@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="http://223.94.36.7:39090/model1/Cesium/Widgets/widgets.css">
+  <script src="http://223.94.36.7:39090/model1/Cesium/Cesium.js"></script>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <script>
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      terrainProvider: Cesium.createWorldTerrain(),
+      timeline: false,
+      animation: false,
+      navigationHelpButton: false,
+      homeButton: false,
+      sceneModePicker: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      // imageryProvider: false,
+      fullscreenButton: false,
+    });
+
+    function getMyHeight() {
+      var position = new Cesium.Cartographic(-1.31968, 0.698874);
+      var height = viewer.scene.sampleHeight(position);
+      console.log(height);
+    }
+    
+    getMyHeight()
+    // setTimeout(() => {
+    //   getMyHeight(120,30)
+    // }, 5000);
+    
+
+
+  </script>
+</body>
+</html>

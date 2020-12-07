@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Use correct character set. -->
+  <meta charset="utf-8">
+  <!-- Tell IE to use the latest, best version. -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>Hello World!</title>
+  <link rel="stylesheet" href="http://223.94.36.7:39090/model1/Cesium/Widgets/widgets.css">
+  <script src="http://223.94.36.7:39090/model1/Cesium/Cesium.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/proj4js/2.6.2/proj4-src.min.js"></script>
+  <style>
+    html,
+    body,
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .to2d {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+    }
+
+    .model {
+      position: absolute;
+      right: 16px;
+      bottom: 40px;
+    }
+
+    .tube {
+      position: absolute;
+      right: 16px;
+      bottom: 64px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cesiumContainer"></div>
+  <button class="to2d" onclick="to2d()">
+    <span>2d</span>
+  </button>
+  <button class="model">
+    <span>模型显/隐</span>
+  </button>
+  <button class="tube">
+    <span>管线显/隐</span>
+  </button>
+  <script>
+    // 字符串转数组
+    function strTofloat(positionArray) {
+      const floatx = positionArray.split(',')
+      const floatArr = [floatx.length]
+      for (let i = 0; i < floatx.length; i++) {
+        floatArr[i] = parseFloat(floatx[i])
+      }
+      return floatArr
+    }
+    //定位
+    function changeto3d(lon, lat) {
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(lon, lat, 400),
+        orientation: {
+          heading: Cesium.Math.toRadians(0.0),
+          pitch: Cesium.Math.toRadians(-30.0),
+          roll: 0.0
+        }
+      })
+    }
+    //转2d按钮
+    function to2d() {
+      localStorage.clear();
+      window.localStorage.setItem("currentViewpoint", currentViewpoint);
+      window.location.href = 'arcgis.html'
+    }
+
+    //获取camera position
+    function getCenterPosition() {
+      result = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(viewer.canvas.clientWidth / 2, viewer.canvas
+        .clientHeight / 2));
+      console.log(result)
+      curPosition = Cesium.Ellipsoid.WGS84.cartesianToCartographic(result);
+      console.log(curPosition)
+      lon = curPosition.longitude * 180 / Math.PI;
+      lat = curPosition.latitude * 180 / Math.PI;
+      currentViewpoint[0] = lon
+      currentViewpoint[1] = lat
+      console.log(currentViewpoint)
+    }
+
+    //模型显隐
+    // 函数的参数传递 总是值传递 不是引用传递 
+
+    function tilesetDisplay(tileset) {
+      if (flag) {
+        translation = Cesium.Cartesian3.fromArray([999, 999, 999])
+        m = Cesium.Matrix4.fromTranslation(translation)
+        tileset._modelMatrix = m
+        flag = false
+        console.log(123)
+      } else {
+        translation = Cesium.Cartesian3.fromArray([0, 0, 0])
+        m = Cesium.Matrix4.fromTranslation(translation)
+        tileset._modelMatrix = m
+        flag = true
+      }
+    }
+
+    var viewer = new Cesium.Viewer('cesiumContainer', {
+      timeline: false,
+      animation: false,
+      navigationHelpButton: false,
+      homeButton: false,
+      sceneModePicker: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      // imageryProvider: false,
+      fullscreenButton: false,
+      selectionIndicator: false
+    });
+    // 除去cesium标志
+    viewer._cesiumWidget._creditContainer.style.display = 'none'
+
+    var currentViewpoint = []
+    var result, curPosition, lon, lat
+    var translation, m
+    var modelFlag, tubeFlag = true
+
+    //鼠标移动事件
+    viewer.scene.camera.moveEnd.addEventListener(function () {
+      getCenterPosition()
+    });
+    console.log(viewer)
+    const tileset = new Cesium.Cesium3DTileset({
+      url: './public/局部场景3dtiles/tileset.json'
+    })
+    viewer.scene.primitives.add(tileset)
+
+    const tube = new Cesium.Cesium3DTileset({
+      url: './public/tube/tileset.json'
+    })
+    viewer.scene.primitives.add(tube)
+
+    var a2dViewpoint = window.localStorage.getItem('currentViewpoint')
+    console.log(a2dViewpoint)
+    //定义坐标
+    var nb2000 = '+proj=tmerc +lat_0=0 +lon_0=121.5 +k=1 +x_0=299920 +y_0=-3199946 +ellps=GRS80 +units=m +no_defs'
+    var wgs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees'
+    //坐标转换
+    a2dViewpointArr = strTofloat(a2dViewpoint)
+    a3dViewpoint = proj4(nb2000, wgs, [a2dViewpointArr[0], a2dViewpointArr[1]])
+    console.log(a3dViewpoint)
+    //视角定位
+    changeto3d(a3dViewpoint[0], a3dViewpoint[1])
+
+    //显隐按钮事件
+    var modelButton = document.getElementsByClassName('model')[0]
+    modelButton.addEventListener('click', function () {
+      console.log(111)
+      tilesetDisplay(modelFlag, tileset)
+    })
+    var tubeButton = document.getElementsByClassName('tube')[0]
+    tubeButton.addEventListener('click', function () {
+      tilesetDisplay(tubeFlag, tube)
+    })
+  </script>
+</body>
+
+</html>

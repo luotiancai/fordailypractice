@@ -1,0 +1,119 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ArcGIS API for JavaScript Hello World App</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    .to3d {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      z-index: 99;
+    }
+
+    .displayNone {
+      display: none;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.17/esri/css/main.css">
+  <script src="https://cdn.bootcdn.net/ajax/libs/proj4js/2.6.2/proj4-src.min.js"></script>
+  <script src="https://js.arcgis.com/4.17/"></script>
+</head>
+
+<body>
+  <button class="to3d" onclick="to3d()">
+    <span>3d</span>
+  </button>
+  <div id="viewDiv"></div>
+  <script>
+    function to3d() {
+      localStorage.clear();
+      window.localStorage.setItem("currentViewpoint", currentViewpoint);
+      window.location.href = "cesium.html";
+    }
+    function strTofloat(positionArray) {
+      const floatx = positionArray.split(',')
+      const floatArr = [floatx.length]
+      for (let i = 0; i < floatx.length; i++) {
+        floatArr[i] = parseFloat(floatx[i])
+      }
+      return floatArr
+    }
+
+    var currentViewpoint = []
+    if (window.localStorage.getItem('currentViewpoint')) {
+      var ViewpointFrom3d = window.localStorage.getItem('currentViewpoint')
+      var ViewpointFrom3dArr = strTofloat(ViewpointFrom3d)
+      console.log(ViewpointFrom3dArr)
+      var nb2000 = '+proj=tmerc +lat_0=0 +lon_0=121.5 +k=1 +x_0=299920 +y_0=-3199946 +ellps=GRS80 +units=m +no_defs'
+      var a2dViewpoint = proj4(nb2000, [ViewpointFrom3dArr[0], ViewpointFrom3dArr[1]])
+      console.log(a2dViewpoint)
+    }
+    //308290.7981002802, 101210.01300464245 310815.0636010689, 106079.27617435064
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/Basemap",
+      "esri/layers/TileLayer",
+      "esri/core/watchUtils",
+      "esri/geometry/Point"
+    ], function (Map, MapView, Basemap, TileLayer, watchUtils, Point) {
+
+      var map = new Map({
+        basemap: new Basemap({
+          baseLayers: [
+            new TileLayer({
+              url: 'http://data.zjsophon.com:46080/arcgis/rest/services/XZ/GXQYX_NB2000/MapServer'
+            })
+          ]
+        })
+      });
+
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        // center: a2dViewpoint ? [a2dViewpoint[0],a2dViewpoint[1]] : null
+      });
+
+      view.when(function () {
+        if (a2dViewpoint) {
+          // view.center.longitude = a2dViewpoint[0]
+          // view.center.latitude = a2dViewpoint[1]
+          console.log(a2dViewpoint, view.spatialReference)
+          let point = new Point({
+            x: a2dViewpoint[0],
+            y: a2dViewpoint[1],
+            spatialReference: view.spatialReference
+          })
+          view.goTo({
+            target: point
+          })
+          view.zoom = 6
+        }
+      })
+
+      watchUtils.whenTrue(view, "stationary", function () {
+        // Get the new center of the view only when view is stationary.
+        if (view.center) {
+          currentViewpoint[0] = view.center.x
+          currentViewpoint[1] = view.center.y
+          console.log(currentViewpoint)
+        }
+      });
+    });
+
+  </script>
+</body>
+
+</html>
